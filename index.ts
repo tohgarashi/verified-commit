@@ -6,6 +6,7 @@ import { Ref } from "./lib/ref";
 import { getBlobsFromFiles } from "./lib/blob";
 import { Tree } from "./lib/tree";
 import { Commit } from "./lib/commit";
+import changedFiles from "./lib/detect-changed";
 
 export default async function run(): Promise<void> {
   try {
@@ -13,8 +14,15 @@ export default async function run(): Promise<void> {
     const repo = new Repo(process.env.GITHUB_REPOSITORY);
     await repo.load();
 
-    // Get inputs
-    const files = getInput("files");
+    // Get inputs and changed files
+    const detectChanged = core.getBooleanInput("detect-changed");
+
+    const files = detectChanged ? await changedFiles() : getInput("files");
+    if (!files) {
+      core.info("Files to be committed are not specified.");
+      return;
+    }
+
     const baseDir = getInput("workspace", {
       default: process.env.GITHUB_WORKSPACE,
     });
