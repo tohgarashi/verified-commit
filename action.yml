@@ -1,4 +1,4 @@
-name: verified-commit
+name: GPG Verified Commit
 description: GitHub Action to create verified commits
 inputs:
   detect-changed:
