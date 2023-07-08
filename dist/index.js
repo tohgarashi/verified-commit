@@ -12361,6 +12361,22 @@ function getInput(name, options = {}) {
     core.debug(`${name}: ${value}`);
     return value;
 }
+function getBooleanInput(name, options = {}) {
+    const value = (() => {
+        try {
+            return core.getBooleanInput(name, options);
+        }
+        catch (e) {
+            if (options.default != null) {
+                return options.default;
+            }
+            core.debug(e);
+            return false;
+        }
+    })();
+    core.debug(`${name}: ${value}`);
+    return value;
+}
 
 // EXTERNAL MODULE: ./node_modules/axios/index.js
 var axios = __nccwpck_require__(6545);
@@ -12751,8 +12767,12 @@ function run() {
             const repo = new Repo(process.env.GITHUB_REPOSITORY);
             yield repo.load();
             // Get inputs and changed files
-            const detectChanged = core.getBooleanInput("detect-changed");
-            const files = detectChanged ? yield detect_changed() : getInput("files");
+            const detectChanged = getBooleanInput("detect-changed", {
+                required: false,
+            });
+            const files = detectChanged
+                ? yield detect_changed()
+                : getInput("files", { required: false });
             if (!files) {
                 core.info("Files to be committed are not specified.");
                 return;

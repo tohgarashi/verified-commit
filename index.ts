@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 
-import getInput from "./lib/input";
+import { getBooleanInput, getInput } from "./lib/input";
 import { Repo } from "./lib/repo";
 import { Ref } from "./lib/ref";
 import { getBlobsFromFiles } from "./lib/blob";
@@ -15,9 +15,13 @@ export default async function run(): Promise<void> {
     await repo.load();
 
     // Get inputs and changed files
-    const detectChanged = core.getBooleanInput("detect-changed");
+    const detectChanged = getBooleanInput("detect-changed", {
+      required: false,
+    });
 
-    const files = detectChanged ? await changedFiles() : getInput("files");
+    const files = detectChanged
+      ? await changedFiles()
+      : getInput("files", { required: false });
     if (!files) {
       core.info("Files to be committed are not specified.");
       return;
