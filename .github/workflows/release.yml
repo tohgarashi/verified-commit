@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
   # Trigger release manually
   workflow_dispatch:
@@ -30,7 +33,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - uses: ./
+      - uses: tohgarashi/verified-commit@vtest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
