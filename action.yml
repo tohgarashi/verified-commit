@@ -1,10 +1,14 @@
 name: Verified commit
 description: GitHub Action to create verified commits
 inputs:
+  detect-changed:
+    description: |
+      If true, this action automatically detects files that have been changed.
+    required: false
   files:
     description: |
       Newline-separated list of files to be committed, relative to root of repository.
-    required: true
+    required: false
   workspace:
     description: |
       Base directory containing files to be committed, defaults to the GitHub workspace directory path, $GITHUB_WORKSPACE.

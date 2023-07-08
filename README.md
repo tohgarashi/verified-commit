@@ -41,9 +41,28 @@ To commit multiple files in a single commit, pass each file on a newline to the 
         ref: refs/heads/my-branch
 ```
 
-## Inputs
-The following inputs are _required_:
+### detect-changed
 
+To detect changed files automatically and commit them, set `detect-changed` input to `true`:
+
+```yaml
+    - name: Commit files
+      uses: tohgarashi/verified-commit@v2.x
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        detect-changed: true
+        commit-message: Committing files
+        ref: refs/heads/my-branch
+```
+
+### No files
+
+If `files` input is not set and changed files are not detected, this action do nothing.
+
+## Inputs
+
+- `detect-changed`: If true, this action automatically detects files that have been changed.
 - `files`: Newline-separated list of files to be committed, relative to root of repository, e.g. <pre>myfile1<br>myfile2<br>...<br>myfileN</pre>
 - `commit-message`: Commit message to be used, e.g. `Add ./myfile`
 - `ref`: Fully qualified name of reference to be updated with commit, e.g. `refs/heads/production`. This reference _must_ already exist. Defaults to the repository's default branch ref.
