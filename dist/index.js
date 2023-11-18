@@ -7001,12 +7001,12 @@ module.exports.wrap = wrap;
 
 "use strict";
 
-module.exports = (flag, argv) => {
-	argv = argv || process.argv;
+
+module.exports = (flag, argv = process.argv) => {
 	const prefix = flag.startsWith('-') ? '' : (flag.length === 1 ? '-' : '--');
-	const pos = argv.indexOf(prefix + flag);
-	const terminatorPos = argv.indexOf('--');
-	return pos !== -1 && (terminatorPos === -1 ? true : pos < terminatorPos);
+	const position = argv.indexOf(prefix + flag);
+	const terminatorPosition = argv.indexOf('--');
+	return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
 };
 
 
@@ -11018,23 +11018,32 @@ function simpleEnd(buf) {
 "use strict";
 
 const os = __nccwpck_require__(2037);
+const tty = __nccwpck_require__(6224);
 const hasFlag = __nccwpck_require__(1621);
 
-const env = process.env;
+const {env} = process;
 
 let forceColor;
 if (hasFlag('no-color') ||
 	hasFlag('no-colors') ||
-	hasFlag('color=false')) {
-	forceColor = false;
+	hasFlag('color=false') ||
+	hasFlag('color=never')) {
+	forceColor = 0;
 } else if (hasFlag('color') ||
 	hasFlag('colors') ||
 	hasFlag('color=true') ||
 	hasFlag('color=always')) {
-	forceColor = true;
+	forceColor = 1;
 }
+
 if ('FORCE_COLOR' in env) {
-	forceColor = env.FORCE_COLOR.length === 0 || parseInt(env.FORCE_COLOR, 10) !== 0;
+	if (env.FORCE_COLOR === 'true') {
+		forceColor = 1;
+	} else if (env.FORCE_COLOR === 'false') {
+		forceColor = 0;
+	} else {
+		forceColor = env.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env.FORCE_COLOR, 10), 3);
+	}
 }
 
 function translateLevel(level) {
@@ -11050,8 +11059,8 @@ function translateLevel(level) {
 	};
 }
 
-function supportsColor(stream) {
-	if (forceColor === false) {
+function supportsColor(haveStream, streamIsTTY) {
+	if (forceColor === 0) {
 		return 0;
 	}
 
@@ -11065,22 +11074,21 @@ function supportsColor(stream) {
 		return 2;
 	}
 
-	if (stream && !stream.isTTY && forceColor !== true) {
+	if (haveStream && !streamIsTTY && forceColor === undefined) {
 		return 0;
 	}
 
-	const min = forceColor ? 1 : 0;
+	const min = forceColor || 0;
+
+	if (env.TERM === 'dumb') {
+		return min;
+	}
 
 	if (process.platform === 'win32') {
-		// Node.js 7.5.0 is the first version of Node.js to include a patch to
-		// libuv that enables 256 color output on Windows. Anything earlier and it
-		// won't work. However, here we target Node.js 8 at minimum as it is an LTS
-		// release, and Node.js 7 is not. Windows 10 build 10586 is the first Windows
-		// release that supports 256 colors. Windows 10 build 14931 is the first release
-		// that supports 16m/TrueColor.
+		// Windows 10 build 10586 is the first Windows release that supports 256 colors.
+		// Windows 10 build 14931 is the first release that supports 16m/TrueColor.
 		const osRelease = os.release().split('.');
 		if (
-			Number(process.versions.node.split('.')[0]) >= 8 &&
 			Number(osRelease[0]) >= 10 &&
 			Number(osRelease[2]) >= 10586
 		) {
@@ -11091,7 +11099,7 @@ function supportsColor(stream) {
 	}
 
 	if ('CI' in env) {
-		if (['TRAVIS', 'CIRCLECI', 'APPVEYOR', 'GITLAB_CI'].some(sign => sign in env) || env.CI_NAME === 'codeship') {
+		if (['TRAVIS', 'CIRCLECI', 'APPVEYOR', 'GITLAB_CI', 'GITHUB_ACTIONS', 'BUILDKITE'].some(sign => sign in env) || env.CI_NAME === 'codeship') {
 			return 1;
 		}
 
@@ -11130,22 +11138,18 @@ function supportsColor(stream) {
 		return 1;
 	}
 
-	if (env.TERM === 'dumb') {
-		return min;
-	}
-
 	return min;
 }
 
 function getSupportLevel(stream) {
-	const level = supportsColor(stream);
+	const level = supportsColor(stream, stream && stream.isTTY);
 	return translateLevel(level);
 }
 
 module.exports = {
 	supportsColor: getSupportLevel,
-	stdout: getSupportLevel(process.stdout),
-	stderr: getSupportLevel(process.stderr)
+	stdout: translateLevel(supportsColor(true, tty.isatty(1))),
+	stderr: translateLevel(supportsColor(true, tty.isatty(2)))
 };
 
 
@@ -12254,7 +12258,7 @@ module.exports = JSON.parse('{"name":"axios","version":"0.21.4","description":"P
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"@tohgarashi/verified-commit","version":"2.1.0","description":"Create a verified commit with GitHub Actions","main":"dist/index.js","scripts":{"start":"node dist/index.js","lint":"tsc --noEmit && eslint \'*/**/*.{js,ts,tsx}\'","test":"jest","build":"ncc build index.ts -o dist"},"repository":{"type":"git","url":"git+https://github.com/tohgarashi/verified-commit.git"},"keywords":[],"author":"tohgarashi <tohgarashi.ha7ck@gmail.com> (https://github.com/tohgarashi)","license":"ISC","bugs":{"url":"https://github.com/tohgarashi/verified-commit/issues"},"homepage":"https://github.com/tohgarashi/verified-commit#readme","devDependencies":{"@types/jest":"^26.0.19","@types/node":"^14.14.10","@typescript-eslint/eslint-plugin":"^4.9.1","@typescript-eslint/parser":"^4.9.1","@vercel/ncc":"^0.36.1","eslint":"^7.15.0","eslint-config-prettier":"^7.0.0","eslint-plugin-prettier":"^3.2.0","jest":"^26.6.3","prettier":"^2.2.1","tempy":"^1.0.0","ts-jest":"^26.4.4","typescript":"^4.1.2"},"dependencies":{"@actions/core":"^1.10.0","@actions/exec":"^1.1.1","axios":"^0.21.0","base64-stream":"^1.0.0","multistream":"^4.0.1"}}');
+module.exports = JSON.parse('{"name":"@tohgarashi/verified-commit","version":"2.1.0","description":"Create a verified commit with GitHub Actions","main":"dist/index.js","scripts":{"start":"node dist/index.js","lint":"tsc --noEmit && eslint \'*/**/*.{js,ts,tsx}\'","test":"jest","build":"ncc build index.ts -o dist"},"repository":{"type":"git","url":"git+https://github.com/tohgarashi/verified-commit.git"},"keywords":[],"author":"tohgarashi <tohgarashi.ha7ck@gmail.com> (https://github.com/tohgarashi)","license":"ISC","bugs":{"url":"https://github.com/tohgarashi/verified-commit/issues"},"homepage":"https://github.com/tohgarashi/verified-commit#readme","devDependencies":{"@types/jest":"^29.5.8","@types/node":"^14.14.10","@typescript-eslint/eslint-plugin":"^4.9.1","@typescript-eslint/parser":"^4.9.1","@vercel/ncc":"^0.36.1","eslint":"^7.15.0","eslint-config-prettier":"^7.0.0","eslint-plugin-prettier":"^3.2.0","jest":"^29.7.0","prettier":"^2.2.1","tempy":"^1.0.0","ts-jest":"^29.1.1","typescript":"^4.1.2"},"dependencies":{"@actions/core":"^1.10.0","@actions/exec":"^1.1.1","axios":"^0.21.0","base64-stream":"^1.0.0","multistream":"^4.0.1"}}');
 
 /***/ })
 
@@ -12612,19 +12616,26 @@ class Tree extends Resource {
         this.parentOid = parentOid;
     }
     save() {
-        var e_1, _a;
+        var _a, e_1, _b, _c;
         return tree_awaiter(this, void 0, void 0, function* () {
             try {
                 // Save all the blobs
-                for (var _b = __asyncValues(this.blobs), _c; _c = yield _b.next(), !_c.done;) {
-                    const blob = _c.value;
-                    yield blob.save();
+                for (var _d = true, _e = __asyncValues(this.blobs), _f; _f = yield _e.next(), _a = _f.done, !_a;) {
+                    _c = _f.value;
+                    _d = false;
+                    try {
+                        const blob = _c;
+                        yield blob.save();
+                    }
+                    finally {
+                        _d = true;
+                    }
                 }
             }
             catch (e_1_1) { e_1 = { error: e_1_1 }; }
             finally {
                 try {
-                    if (_c && !_c.done && (_a = _b.return)) yield _a.call(_b);
+                    if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
                 }
                 finally { if (e_1) throw e_1.error; }
             }
