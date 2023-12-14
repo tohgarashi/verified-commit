@@ -60,7 +60,7 @@ To detect changed files automatically and commit them, set `detect-changed` inpu
 
 ### No files
 
-If `files` input is not set and changed files are not detected, this action do nothing.
+If `files` input is not set and changed files are not detected, this action does nothing.
 
 ## Inputs
 
